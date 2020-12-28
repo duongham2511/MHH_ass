@@ -27,3 +27,16 @@ if __name__ == '__main__':
     print(test1)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+#Tri
+#equation 3
+def MC_BlowAir(P_Blow,n_HeatCO2=0.057,U_Blow=0.5,A_Flr=1.3*10**4):
+    return (n_HeatCO2*U_Blow*P_Blow)/A_Flr
+
+#equation 4
+def MC_ExtAir(O_ExtCO2=7.2*10**4,U_ExtCO2=0.5,A_Flr=1.3*10**4):
+    return (O_ExtCO2*U_ExtCO2)/A_Flr
+
+#equation 5
+def MC_PadAir(CO2_out,CO2_Air,f_Pad=0.016):
+    return f_Pad*(CO2_out-CO2_Air)

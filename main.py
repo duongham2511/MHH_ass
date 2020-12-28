@@ -40,3 +40,19 @@ def MC_ExtAir(O_ExtCO2=7.2*10**4,U_ExtCO2=0.5,A_Flr=1.3*10**4):
 #equation 5
 def MC_PadAir(CO2_out,CO2_Air,f_Pad=0.016):
     return f_Pad*(CO2_out-CO2_Air)
+
+#Hien
+#equation 11
+def eta_InsScr(zeta_InsScr = 1):
+    return zeta_InsScr * (2 - zeta_InsScr)
+
+#equation 12
+def f_leakage(v_wind = 2.4, c_leakage = 10**-4):
+    if (v_wind < 0.25):
+        return 0.25 * c_leakage
+    else:
+        return v_wind * c_leakage
+
+#equation 14
+def f_VentForced(phi_VentForced, U_VentForced = 0.5, A_Flr = 1.3 * 10**4):
+    return (eta_InsScr(1) * U_VentForced * phi_VentForced) / A_Flr

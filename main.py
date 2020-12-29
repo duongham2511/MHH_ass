@@ -12,7 +12,7 @@ def print_hi(name):
 
 
 #equation 7
-def F_Th_Scr(u_th_scr,k_th_scr = 0.03*10**(-3),g = 9.81 ,t_air,t_top,p_air,p_top):
+def F_Th_Scr(t_air,t_top,p_air,p_top,u_th_scr,k_th_scr = 0.03*10**(-3),g = 9.81):
     return u_th_scr * k_th_scr * math.pow(math.fabs(t_air - t_top),2/3) + (1-u_th_scr) * math.sqrt(g*(1-u_th_scr)*math.fabs(p_air-p_top)/(2 * (p_air+p_top)/2))
 
 #equation 10

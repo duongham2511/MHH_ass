@@ -74,23 +74,17 @@ return L
 
 #Quan
 #equation 6
-def MC_AirTop(co2_air,co2_top,t_air,t_top,p_air,p_top,u_th_scr,k_th_scr = 0.03*10**(-3),g = 9.81):
-    fThScr = F_Th_Scr(t_air,t_top,p_air,p_top,u_th_scr,k_th_scr,g)
-    return fThScr*(co2_air - co2_top)
+def MC_AirTop(F_Th_Scr,co2_air,co2_top):
+    return F_Th_Scr*(co2_air - co2_top)
 #equation 13
-def f_VentSide(eta_Side,eta_Side_Thr,U_ThScr,v_wind,c_leakage,c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out):
-    eta_insScr = eta_InsScr(1)
+def f_VentSide(eta_InsScr,eta_Side, eta_Side_Thr, f_leakage, U_ThScr, c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out,v_wind):
     if eta_Side >= eta_Side_Thr:
-        fLeakage = f_leakage(v_wind, c_leakage)
-        f2VentSide = f_vent_roof_side(c_d, c_w, a_flr, u_roof, u_side, 0, a_side, h_sideroof, g, t_air, t_out, v_wind)
-        return eta_insScr * f2VentSide + 0.5 * fLeakage
+        return eta_InsScr*f_vent_roof_side(c_d,c_w,a_flr,u_roof,u_side,0,a_side,h_sideroof,g,t_air,t_out,v_wind) + 0.5*f_leakage
     else:
-        fLeakage = f_leakage(v_wind, c_leakage)
         f2VentSide1 = f_vent_roof_side(c_d, c_w, a_flr, u_roof, u_side, a_roof, a_side, h_sideroof, g, t_air, t_out, v_wind)
         f2VentSide2 = f_vent_roof_side(c_d, c_w, a_flr, u_roof, u_side, 0, a_side, h_sideroof, g, t_air, t_out, v_wind)
-        return eta_insScr * (U_ThScr * f2VentSide2 + (1 - U_ThScr) * f2VentSide1) + 0.5 * fLeakage
+
+        return eta_InsScr*(U_ThScr*f2VentSide2 + (1 - U_ThScr)*f2VentSide1*eta_Side) + 0.5*f_leakage
 #equation 9
-def MC_AirOut(co2_air,co2_out,eta_insScr,eta_Side,eta_Side_Thr,U_ThScr,v_wind,c_leakage,c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out,phi_VentForced, U_VentForced = 0.5, A_Flr = 1.3 * 10**4):
-    fVentSide = f_VentSide(eta_insScr,eta_Side,eta_Side_Thr,U_ThScr,v_wind,c_leakage,c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out)
-    fVentForced = f_VentForced(phi_VentForced, U_VentForced, A_Flr)
-    return (fVentSide + fVentForced) * (co2_air - co2_out)
+def MC_AirOut(f_VentSide, f_VentForced, co2_air, co2_out):
+    return (f_VentSide + f_VentForced) * (co2_air - co2_out)

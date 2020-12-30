@@ -51,6 +51,19 @@ def fVentRoof(eta_InsScr,fVentRoof2,f_leakage,eta_Roof,fVentRoofSide,eta_Side,U_
         return eta_InsScr*fVentRoof2+0.5*f_leakage
     else:
         return eta_InsScr*(U_ThScr*fVentRoof2+(1-U_ThScr)*fVentRoofSide*eta_Side)+0.5*f_leakage
+    
+#Giai thuat Euler
+#hàm dx mẫu lan luot chua gia tri cua CO2_Air' va CO2_Top'
+def dx():
+    return [3,6]
+#Theo ly thuyet
+# y'(t) = f(t,y(t)) <=> CO2_Air'(t) = f(t,CO2_Air(t)) <=> CO2_Air' = dx
+# => CO2_Air(t0+h) = CO2_Air(t0) + h*f(t0,CO2_Air(t0)) = CO2_Air(t0) + h*dx
+def Euler(CO2_Air_t0,CO2_Top_t0,h,t=dx()):
+    CO2_Air = CO2_Air_t0 + h*t[0]
+    CO2_Top = CO2_Top_t0 + h*t[1]
+    return [CO2_Air,CO2_Top] 
+
 
 #Hien
 #equation 11

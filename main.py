@@ -88,3 +88,11 @@ def f_VentSide(eta_InsScr,eta_Side, eta_Side_Thr, f_leakage, U_ThScr, c_d,c_w,a_
 #equation 9
 def MC_AirOut(f_VentSide, f_VentForced, co2_air, co2_out):
     return (f_VentSide + f_VentForced) * (co2_air - co2_out)
+
+#cong thuc 19
+def hCBuf(CBuf,CMaxBuf):
+if CBuf > CMaxBuf:
+hCBuf = 0
+else:
+hCBuf=1
+return hCBuf

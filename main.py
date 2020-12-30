@@ -120,6 +120,30 @@ def f_VentSide(eta_InsScr,eta_Side, eta_Side_Thr, f_leakage, U_ThScr, c_d,c_w,a_
 #equation 9
 def MC_AirOut(f_VentSide, f_VentForced, co2_air, co2_out):
     return (f_VentSide + f_VentForced) * (co2_air - co2_out)
+#Runge-Kutta bac 4
+#gia su dx()[0] la co2_air', dx()[1] la co2_top'
+def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
+    #buoc nhay: (t + h - t) / h
+    n = 1
+    #gia tri tai (t + h) cua co2_air
+    co2_air = co2_air_t0
+    #gia tri tai (t + h) cua co2_top
+    co2_top = co2_top_t0
+    for i in range(1, n + 1):
+        k1 = h * g[0](t, co2_air)
+        k2 = h * g[0](t + 0.5 * h, co2_air + 0.5 * k1)
+        k3 = h * g[0](t + 0.5 * h, co2_air + 0.5 * k2)
+        k4 = h * g[0](t + h, co2_air + k3)
+        co2_air = co2_air + (1.0 / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
+        t = t + h
+    for i in range(1, n + 1):
+        k1 = h * g[1](t, co2_top)
+        k2 = h * g[1](t + 0.5 * h, co2_top + 0.5 * k1)
+        k3 = h * g[1](t + 0.5 * h, co2_top + 0.5 * k2)
+        k4 = h * g[1](t + h, co2_top + k3)
+        co2_top = co2_top + (1.0 / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
+        t = t + h
+    return [co2_air, co2_top]
 
 #cong thuc 19
 def hCBuf(CBuf,CMaxBuf):

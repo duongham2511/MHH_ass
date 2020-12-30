@@ -38,8 +38,8 @@ def MC_ExtAir(O_ExtCO2=7.2*10**4,U_ExtCO2=0.5,A_Flr=1.3*10**4):
     return (O_ExtCO2*U_ExtCO2)/A_Flr
 
 #equation 5
-def MC_PadAir(CO2_out,CO2_Air,f_Pad=0.016):
-    return f_Pad*(CO2_out-CO2_Air)
+def MC_PadAir(CO2_out,CO2_Air,U_Pad,phi_Pad,A_Flr):
+    return u_Pad*phi_Pad/A_Flr*(CO2_out-CO2_Air)
 
 #Hien
 #equation 11

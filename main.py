@@ -41,6 +41,17 @@ def MC_ExtAir(O_ExtCO2=7.2*10**4,U_ExtCO2=0.5,A_Flr=1.3*10**4):
 def MC_PadAir(CO2_out,CO2_Air,U_Pad,phi_Pad,A_Flr):
     return u_Pad*phi_Pad/A_Flr*(CO2_out-CO2_Air)
 
+#equation 15
+def MC_TopOut(fVentRoof,CO2_out,CO2_top):
+    return fVentRoof*(CO2_top-CO2_out)
+
+#equation 16
+def fVentRoof(eta_InsScr,fVentRoof2,f_leakage,eta_Roof,fVentRoofSide,eta_Side,U_ThScr=0.3,eta_Roof_Thr=0.9):
+    if(eta_Roof>=eta_Roof_Thr):
+        return eta_InsScr*fVentRoof2+0.5*f_leakage
+    else:
+        return eta_InsScr*(U_ThScr*fVentRoof2+(1-U_ThScr)*fVentRoofSide*eta_Side)+0.5*f_leakage
+
 #Hien
 #equation 11
 def eta_InsScr(zeta_InsScr = 1):

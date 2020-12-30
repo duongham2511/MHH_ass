@@ -81,6 +81,14 @@ def f_leakage(v_wind = 2.4, c_leakage = 10**-4):
 def f_VentForced(phi_VentForced, U_VentForced = 0.5, A_Flr = 1.3 * 10**4):
     return (eta_InsScr(1) * U_VentForced * phi_VentForced) / A_Flr
 
+#equation 25
+def Pmax_T(kT, fT):
+    return kT*fT
+
+#equation 29
+def Pmax_LT(Pmax_T, P_MLT, L, L_half):
+    return (P_MLT * Pmax_T * L) / (L + L_half)
+
 # cong thuc 17
 def fVentRoof2(Cd,URoof,ARoof,AFlr,g,hRoof,TAir,TOut,TMeanAir,Cw,vWind):
     fVentRoof2 = (Cd*URoof*ARoof)/(2*AFlr)*(g*hRoof*(TAir-TOut)/(2*TMeanAir)+Cw*pow(vWind,2))**1/2

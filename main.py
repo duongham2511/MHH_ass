@@ -81,13 +81,6 @@ def f_leakage(v_wind = 2.4, c_leakage = 10**-4):
 def f_VentForced(phi_VentForced, U_VentForced = 0.5, A_Flr = 1.3 * 10**4):
     return (eta_InsScr(1) * U_VentForced * phi_VentForced) / A_Flr
 
-#equation 25
-def Pmax_T(kT, fT):
-    return kT*fT
-
-#equation 29
-def Pmax_LT(Pmax_T, P_MLT, L, L_half):
-    return (P_MLT * Pmax_T * L) / (L + L_half)
 
 # cong thuc 17
 def fVentRoof2(Cd,URoof,ARoof,AFlr,g,hRoof,TAir,TOut,TMeanAir,Cw,vWind):
@@ -163,4 +156,22 @@ alpha=0.385
 import math
 def J(J_POT,PAR_Can):
     return (J_POT+alpha*PAR_Can-math.sqrt(pow(J_POT+alpha*PAR_Can,2)-4*0.7*J_POT*alpha*PAR_Can))/(2*O)
+
+LAI = 2
+J_MAX_Leaf = 210
+E_j = 37 * 10**3
+T_CanK = 293.2
+T_K = 298.15
+R = 8.314
+S = 710
+H = 22 * 10**4
+
+#J_MAX_25_CAN
+def J_MAX_25_CAN():
+    return LAI * J_MAX_Leaf
+#J_POT
+def J_POT():
+    return J_MAX_25_CAN() * math.exp(E_j * (T_CanK - T_K) / (R * T_CanK * T_K)) * (1 + math.exp((S * T_K - H) / (R * T_K))) / (1 + math.exp((S * T_CanK - H) / (R * T_CanK)))
+
+
 

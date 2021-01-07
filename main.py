@@ -153,7 +153,6 @@ def P(CO2_Stom,J,r):
 #Global variable
 O=0.7
 alpha=0.385
-import math
 def J(J_POT,PAR_Can):
     return (J_POT+alpha*PAR_Can-math.sqrt(pow(J_POT+alpha*PAR_Can,2)-4*0.7*J_POT*alpha*PAR_Can))/(2*O)
 

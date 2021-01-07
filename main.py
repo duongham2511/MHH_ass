@@ -99,20 +99,20 @@ def L(L0,K,e,LAI,m):
 
 #Quan
 #equation 6
-def MC_AirTop(F_Th_Scr,co2_air,co2_top):
-    return F_Th_Scr*(co2_air - co2_top)
+def MC_AirTop(co2_air,co2_top):
+    return F_Th_Scr()*(co2_air - co2_top)
 #equation 13
-def f_VentSide(eta_InsScr,eta_Side, eta_Side_Thr, f_leakage, U_ThScr, c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out,v_wind):
+def f_VentSide(eta_Side, eta_Side_Thr, f_leakage, U_ThScr, c_d,c_w,a_flr,u_roof,u_side,a_roof,a_side,h_sideroof,g,t_air,t_out,v_wind):
     if eta_Side >= eta_Side_Thr:
-        return eta_InsScr*f_vent_roof_side(c_d,c_w,a_flr,u_roof,u_side,0,a_side,h_sideroof,g,t_air,t_out,v_wind) + 0.5*f_leakage
+        return eta_InsScr()*f_vent_roof_side(c_d,c_w,a_flr,u_roof,u_side,0,a_side,h_sideroof,g,t_air,t_out,v_wind) + 0.5*f_leakage
     else:
         f2VentSide1 = f_vent_roof_side(c_d, c_w, a_flr, u_roof, u_side, a_roof, a_side, h_sideroof, g, t_air, t_out, v_wind)
         f2VentSide2 = f_vent_roof_side(c_d, c_w, a_flr, u_roof, u_side, 0, a_side, h_sideroof, g, t_air, t_out, v_wind)
 
-        return eta_InsScr*(U_ThScr*f2VentSide2 + (1 - U_ThScr)*f2VentSide1*eta_Side) + 0.5*f_leakage
+        return eta_InsScr()*(U_ThScr*f2VentSide2 + (1 - U_ThScr)*f2VentSide1*eta_Side) + 0.5*f_leakage
 #equation 9
-def MC_AirOut(f_VentSide, f_VentForced, co2_air, co2_out):
-    return (f_VentSide + f_VentForced) * (co2_air - co2_out)
+def MC_AirOut(co2_air, co2_out):
+    return (f_VentSide() + f_VentForced()) * (co2_air - co2_out)
 #Runge-Kutta bac 4
 #gia su dx()[0] la co2_air', dx()[1] la co2_top'
 def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
@@ -173,5 +173,13 @@ def J_MAX_25_CAN():
 def J_POT():
     return J_MAX_25_CAN() * math.exp(E_j * (T_CanK - T_K) / (R * T_CanK * T_K)) * (1 + math.exp((S * T_K - H) / (R * T_K))) / (1 + math.exp((S * T_CanK - H) / (R * T_CanK)))
 
+c_r = 1.7
+nCo2Air_Stom = 0.67
+#CO2_Stom
+def CO2_Stom(CO2_air):
+    return nCo2Air_Stom * CO2_air
+#Gamma
+def Gamma(T_Can):
+    return (J_MAX_Leaf * c_r * T_Can) / J_MAX_25_CAN() + 20 * c_r * (1 - J_MAX_Leaf / J_MAX_25_CAN())
 
 

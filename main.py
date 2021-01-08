@@ -50,30 +50,15 @@ a_side = 0
 U_VentForced = 0
 phi_VentForced = 0
 
+M_CH20 = 30*10**(-3)
+CBuf = 0
+CMaxBuf = 20*10**3
+
 def dx(CO2_Air,CO2_Top):
     dot_CO2_Air = (MC_BlowAir() + MC_ExtAir() + MC_PadAir(CO2_out,CO2_Air) - MC_AirTop(CO2_Air,CO2_Top) - MC_AirOut(CO2_Air,CO2_out) - MC_AirCan())/cap_CO2_Air
     dot_CO2_Top = (MC_AirTop(CO2_Air,CO2_Top) - MC_TopOut(CO2_out,CO2_Top)) / cap_CO2_Top
     return dot_CO2_Air,dot_CO2_Top
 
-
-#equation 7
-def F_Th_Scr():
-    return u_th_scr * k_th_scr * math.pow(math.fabs(t_air - t_top),2/3) + (1-u_th_scr) * math.sqrt(g*(1-u_th_scr)*math.fabs(p_air-p_top)/(2 * (p_air+p_top)/2))
-
-#equation 10
-def f_vent_roof_side(u_roof,u_side,a_roof,a_side):
-    t_mean_air = (t_air + t_out)/2
-    return C_d/A_Flr * math.sqrt(u_roof**2 * u_side**2 * a_roof**2 * a_side**2 / (u_roof**2 * a_roof**2 + u_side**2 * a_side**2) * 2*g*h_sideroof*(t_air - t_out)/t_mean_air + ((u_roof*a_roof + u_side*a_side)/2)**2 * C_w * v_wind**2)
-
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    test1 = f_th_scr(0.8,0.2,9.8,37,38,0.9,1.0)
-    print(test1)
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
-
-#Tri
 #equation 3
 def MC_BlowAir():
     return (n_HeatCO2*U_Blow*P_Blow)/A_Flr
@@ -93,6 +78,24 @@ def MC_TopOut(CO2_out,CO2_top):
 #equation 6
 def MC_AirTop(co2_air,co2_top):
     return F_Th_Scr()*(co2_air - co2_top)
+
+def MC_AirCan():
+    return M_CH20 * hCBuf() * (P() -R())
+
+#equation 7
+def F_Th_Scr():
+    return u_th_scr * k_th_scr * math.pow(math.fabs(t_air - t_top),2/3) + (1-u_th_scr) * math.sqrt(g*(1-u_th_scr)*math.fabs(p_air-p_top)/(2 * (p_air+p_top)/2))
+
+#equation 10
+def f_vent_roof_side(u_roof,u_side,a_roof,a_side):
+    t_mean_air = (t_air + t_out)/2
+    return C_d/A_Flr * math.sqrt(u_roof**2 * u_side**2 * a_roof**2 * a_side**2 / (u_roof**2 * a_roof**2 + u_side**2 * a_side**2) * 2*g*h_sideroof*(t_air - t_out)/t_mean_air + ((u_roof*a_roof + u_side*a_side)/2)**2 * C_w * v_wind**2)
+
+
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    test1 = f_th_scr(0.8,0.2,9.8,37,38,0.9,1.0)
+    print(test1)
 
 #equation 16
 def fVentRoof():
@@ -186,7 +189,7 @@ def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
     return [co2_air, co2_top]
 
 #cong thuc 19
-def hCBuf(CBuf,CMaxBuf):
+def hCBuf():
     if CBuf > CMaxBuf:
     hCBuf = 0
     else:
@@ -195,8 +198,10 @@ def hCBuf(CBuf,CMaxBuf):
 
 #Tri (P va J)
 def P(CO2_Stom,J,r):
-    return (J*(CO2_Stom-r))/(4*(CO2_Stom+2*r))
+    return (J*(CO2_Stom-Gamma))/(4*(CO2_Stom+2*Gamma))
 
+def R():
+    return P() * Gamma() / CO2_Stom()
 #Global variable
 O=0.7
 alpha=0.385
@@ -219,13 +224,13 @@ def J_MAX_25_CAN():
 def J_POT():
     return J_MAX_25_CAN() * math.exp(E_j * (T_CanK - T_K) / (R * T_CanK * T_K)) * (1 + math.exp((S * T_K - H) / (R * T_K))) / (1 + math.exp((S * T_CanK - H) / (R * T_CanK)))
 
-c_r = 1.7
+c_gamma = 1.7
 nCo2Air_Stom = 0.67
 #CO2_Stom
-def CO2_Stom(CO2_air):
-    return nCo2Air_Stom * CO2_air
+def CO2_Stom():
+    return nCo2Air_Stom * CO2_Air
 #Gamma
-def Gamma(T_Can):
-    return (J_MAX_Leaf * c_r * T_Can) / J_MAX_25_CAN() + 20 * c_r * (1 - J_MAX_Leaf / J_MAX_25_CAN())
+def Gamma(T_Can = t_air):
+    return (J_MAX_Leaf * c_gamma * T_Can) / J_MAX_25_CAN() + 20 * c_gamma * (1 - J_MAX_Leaf / J_MAX_25_CAN())
 
 

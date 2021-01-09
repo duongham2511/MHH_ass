@@ -5,6 +5,9 @@
 
 import math
 
+vent_lee = 0
+vent_wind = 0
+
 CO2_out = 412.89
 cap_CO2_Air = 3.8
 cap_CO2_Top = 0.4
@@ -42,7 +45,7 @@ c_leakage = 10**-4
 C_d = 0.75
 C_w = 0.09
 h_sideroof = 0
-u_roof = 1
+u_roof = (vent_lee + vent_wind) / 2
 u_side = 0
 a_roof = 0.3 * A_Flr
 a_side = 0
@@ -105,7 +108,8 @@ def F_Th_Scr():
 #equation 10
 def f_vent_roof_side(u_roof,u_side,a_roof,a_side):
     t_mean_air = (t_air + t_out)/2
-    return C_d/A_Flr * math.sqrt(u_roof**2 * u_side**2 * a_roof**2 * a_side**2 / (u_roof**2 * a_roof**2 + u_side**2 * a_side**2) * 2*g*h_sideroof*(t_air - t_out)/t_mean_air + ((u_roof*a_roof + u_side*a_side)/2)**2 * C_w * v_wind**2)
+    a = u_roof**2 * u_side**2 * a_roof**2 * a_side**2 / (u_roof**2 * a_roof**2 + u_side**2 * a_side**2) if u_roof**2 * a_roof**2 + u_side**2 * a_side**2 !=0 else 0
+    return C_d/A_Flr * math.sqrt(2 * g * h_sideroof * a*(t_air - t_out)/t_mean_air + ((u_roof*a_roof + u_side*a_side)/2)**2 * C_w * v_wind**2)
 
 #equation 11
 def eta_InsScr():
@@ -191,7 +195,7 @@ def hCBuf():
 
 #Tri (P va J)
 def P(CO2_Air):
-    return (J()*(CO2_Stom(CO2_Air)-Gamma()))/(4*(CO2_Stom+2*Gamma()))
+    return (J()*(CO2_Stom(CO2_Air)-Gamma()))/(4*(CO2_Stom(CO2_Air)+2*Gamma()))
 
 def R_func(CO2_Air):
     return P(CO2_Air) * Gamma() / CO2_Stom(CO2_Air)
@@ -217,5 +221,5 @@ def Gamma(T_Can = t_air):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    pass
+    print(Euler(484,484,5))
 

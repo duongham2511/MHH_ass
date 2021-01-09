@@ -165,28 +165,24 @@ def f_VentSide():
 
         return eta_InsScr()*(u_th_scr*f2VentSide2 + (1 - u_th_scr)*f2VentSide1*eta_Side) + 0.5*f_leakage()
 #Runge-Kutta bac 4
-#gia su dx()[0] la co2_air', dx()[1] la co2_top'
-def rk4(co2_air_t0, co2_top_t0, h, t, g = dx):
-    #buoc nhay: (t + h - t) / h
-    n = 1
+def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
+    #buoc nhay
+    n = (int)(t*60/h)
     #gia tri tai (t + h) cua co2_air
     co2_air = co2_air_t0
     #gia tri tai (t + h) cua co2_top
     co2_top = co2_top_t0
     for i in range(1, n + 1):
-        k1 = h * g[0](t, co2_air)
-        k2 = h * g[0](t + 0.5 * h, co2_air + 0.5 * k1)
-        k3 = h * g[0](t + 0.5 * h, co2_air + 0.5 * k2)
-        k4 = h * g[0](t + h, co2_air + k3)
-        co2_air = co2_air + (1.0 / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
-        t = t + h
-    for i in range(1, n + 1):
-        k1 = h * g[1](t, co2_top)
-        k2 = h * g[1](t + 0.5 * h, co2_top + 0.5 * k1)
-        k3 = h * g[1](t + 0.5 * h, co2_top + 0.5 * k2)
-        k4 = h * g[1](t + h, co2_top + k3)
-        co2_top = co2_top + (1.0 / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
-        t = t + h
+        k1 = g(co2_air, co2_top)[0]
+        l1 = g(co2_air, co2_top)[1]
+        k2 = g(co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[0]
+        l2 = g(co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[1]
+        k3 = g(co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[0]
+        l3 = g(co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[1]
+        k4 = g(co2_air + h * k3, co2_top + l3 * h)[0]
+        l4 = g(co2_air + h * k3, co2_top + l3 * h)[1]
+        co2_air = co2_air + (h / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
+        co2_top = co2_top + (h / 6.0)*(l1 + 2 * l2 + 2 * l3 + l4)
     return [co2_air, co2_top]
 
 #cong thuc 19

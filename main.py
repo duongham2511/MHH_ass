@@ -174,14 +174,14 @@ def rk4(co2_air_t0, co2_top_t0, h, g = dx):
     #gia tri tai (t + h) cua co2_top
     co2_top = co2_top_t0
     for i in range(1, n + 1):
-        k1 = g(co2_air, co2_top)[0]
-        l1 = g(co2_air, co2_top)[1]
-        k2 = g(co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[0]
-        l2 = g(co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[1]
-        k3 = g(co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[0]
-        l3 = g(co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[1]
-        k4 = g(co2_air + h * k3, co2_top + l3 * h)[0]
-        l4 = g(co2_air + h * k3, co2_top + l3 * h)[1]
+        k1 = g(0,co2_air, co2_top)[0]
+        l1 = g(0,co2_air, co2_top)[1]
+        k2 = g(0,co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[0]
+        l2 = g(0,co2_air + 0.5 *h*k1, co2_top + 0.5 *h* l1)[1]
+        k3 = g(0,co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[0]
+        l3 = g(0,co2_air + 0.5 * h * k2, co2_top + 0.5 * h * l2)[1]
+        k4 = g(0,co2_air + h * k3, co2_top + l3 * h)[0]
+        l4 = g(0,co2_air + h * k3, co2_top + l3 * h)[1]
         co2_air = co2_air + (h / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
         co2_top = co2_top + (h / 6.0)*(l1 + 2 * l2 + 2 * l3 + l4)
     return [co2_air, co2_top]
@@ -221,5 +221,5 @@ def Gamma(T_Can = t_air):
 if __name__ == '__main__':
     print(dx(0,484,484))
     print(Euler(484,484,5*60))
-    print(rk4(484,484,5*60,0))
+    print(rk4(484,484,5*60))
 

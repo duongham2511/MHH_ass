@@ -12,16 +12,18 @@ CO2_out = 412.89
 cap_CO2_Air = 3.8
 cap_CO2_Top = 0.4
 
+CO2_dosage = 0
 P_Blow = 0
 n_HeatCO2=0.057
-U_Blow=0
+U_Blow= 0
 
 A_Flr = 1.4 * 10**4
 U_Pad = 0
 phi_Pad = 0
 
+CO2_dosage = 0.14
 O_ExtCO2=7.2*10**4
-U_ExtCO2=0
+U_ExtCO2= 0
 
 t_air = 19.9
 t_top = 19.9
@@ -68,6 +70,8 @@ T_K = 298.15
 R = 8.314
 S = 710
 H = 22 * 10**4
+c_gamma = 1.7
+nCo2Air_Stom = 0.67
 
 def dx(CO2_Air,CO2_Top):
     dot_CO2_Air = (MC_BlowAir() + MC_ExtAir() + MC_PadAir(CO2_out,CO2_Air) - MC_AirTop(CO2_Air,CO2_Top) - MC_AirOut(CO2_Air,CO2_out) - MC_AirCan(CO2_Air))/cap_CO2_Air
@@ -209,9 +213,6 @@ def J_MAX_25_CAN():
 #J_POT
 def J_POT():
     return J_MAX_25_CAN() * math.exp(E_j * (T_CanK - T_K) / (R * T_CanK * T_K)) * (1 + math.exp((S * T_K - H) / (R * T_K))) / (1 + math.exp((S * T_CanK - H) / (R * T_CanK)))
-
-c_gamma = 1.7
-nCo2Air_Stom = 0.67
 #CO2_Stom
 def CO2_Stom(CO2_Air):
     return nCo2Air_Stom * CO2_Air
@@ -221,5 +222,6 @@ def Gamma(T_Can = t_air):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    print(dx(484,484))
     print(Euler(484,484,5*60))
 

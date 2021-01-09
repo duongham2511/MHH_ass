@@ -42,7 +42,7 @@ c_leakage = 10**-4
 C_d = 0.75
 C_w = 0.09
 h_sideroof = 0
-u_roof = 0
+u_roof = 1
 u_side = 0
 a_roof = 0.3 * A_Flr
 a_side = 0
@@ -54,8 +54,20 @@ M_CH20 = 30*10**(-3)
 CBuf = 0
 CMaxBuf = 20*10**3
 
+theta=0.7
+alpha=0.385
+PAR_Can = 100
+LAI = 2
+J_MAX_Leaf = 210
+E_j = 37 * 10**3
+T_CanK = 293.2
+T_K = 298.15
+R = 8.314
+S = 710
+H = 22 * 10**4
+
 def dx(CO2_Air,CO2_Top):
-    dot_CO2_Air = (MC_BlowAir() + MC_ExtAir() + MC_PadAir(CO2_out,CO2_Air) - MC_AirTop(CO2_Air,CO2_Top) - MC_AirOut(CO2_Air,CO2_out) - MC_AirCan())/cap_CO2_Air
+    dot_CO2_Air = (MC_BlowAir() + MC_ExtAir() + MC_PadAir(CO2_out,CO2_Air) - MC_AirTop(CO2_Air,CO2_Top) - MC_AirOut(CO2_Air,CO2_out) - MC_AirCan(CO2_Air))/cap_CO2_Air
     dot_CO2_Top = (MC_AirTop(CO2_Air,CO2_Top) - MC_TopOut(CO2_out,CO2_Top)) / cap_CO2_Top
     return dot_CO2_Air,dot_CO2_Top
 
@@ -69,7 +81,7 @@ def MC_ExtAir():
 
 #equation 5
 def MC_PadAir(CO2_out,CO2_Air):
-    return u_Pad*phi_Pad/A_Flr*(CO2_out-CO2_Air)
+    return U_Pad *phi_Pad/A_Flr*(CO2_out-CO2_Air)
 
 #equation 15
 def MC_TopOut(CO2_out,CO2_top):
@@ -79,8 +91,12 @@ def MC_TopOut(CO2_out,CO2_top):
 def MC_AirTop(co2_air,co2_top):
     return F_Th_Scr()*(co2_air - co2_top)
 
-def MC_AirCan():
-    return M_CH20 * hCBuf() * (P() -R())
+#equation 9
+def MC_AirOut(co2_air, co2_out):
+    return (f_VentSide() + f_VentForced()) * (co2_air - co2_out)
+
+def MC_AirCan(CO2_Air):
+    return M_CH20 * hCBuf() * (P(CO2_Air) - R_func(CO2_Air))
 
 #equation 7
 def F_Th_Scr():
@@ -91,33 +107,6 @@ def f_vent_roof_side(u_roof,u_side,a_roof,a_side):
     t_mean_air = (t_air + t_out)/2
     return C_d/A_Flr * math.sqrt(u_roof**2 * u_side**2 * a_roof**2 * a_side**2 / (u_roof**2 * a_roof**2 + u_side**2 * a_side**2) * 2*g*h_sideroof*(t_air - t_out)/t_mean_air + ((u_roof*a_roof + u_side*a_side)/2)**2 * C_w * v_wind**2)
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    test1 = f_th_scr(0.8,0.2,9.8,37,38,0.9,1.0)
-    print(test1)
-
-#equation 16
-def fVentRoof():
-    if(eta_Roof>=eta_Roof_Thr):
-        return eta_InsScr()*fVentRoof2() + 0.5*f_leakage()
-    else:
-        return eta_InsScr()*(U_ThScr*fVentRoof2()+(1-U_ThScr)*f_vent_roof_side(u_roof,u_side,a_roof,a_side)*eta_Side)+0.5*f_leakage()
-    
-#Giai thuat Euler
-#hàm dx mẫu lan luot chua gia tri cua CO2_Air' va CO2_Top'
-def dx():
-    return [3,6]
-#Theo ly thuyet
-# y'(t) = f(t,y(t)) <=> CO2_Air'(t) = f(t,CO2_Air(t)) <=> CO2_Air' = dx
-# => CO2_Air(t0+h) = CO2_Air(t0) + h*f(t0,CO2_Air(t0)) = CO2_Air(t0) + h*dx
-def Euler(CO2_Air_t0,CO2_Top_t0,h,t=dx()):
-    CO2_Air = CO2_Air_t0 + h*t[0]
-    CO2_Top = CO2_Top_t0 + h*t[1]
-    return [CO2_Air,CO2_Top] 
-
-
-#Hien
 #equation 11
 def eta_InsScr():
     return zeta_InsScr * (2 - zeta_InsScr)
@@ -140,15 +129,22 @@ def fVentRoof2():
     fVentRoof2 = (C_d*u_roof*a_roof)/(2*A_Flr)*(g*h_sideroof*(t_air-t_out)/(2*t_mean_air)+C_w*pow(v_wind,2))**1/2
     return fVentRoof2
 
-#cong thuc 24
-def fT(e,Hd,R,T0,Hd,S,T):
-    fT= (1+pow(e,-Hd/R*(1/T0-1/(Hd/S))))/(1+pow(e,-Hd/R*(1/T-1/(Hd/S))))
-    return fT
+#equation 16
+def fVentRoof():
+    if(eta_Roof>=eta_Roof_Thr):
+        return eta_InsScr()*fVentRoof2() + 0.5*f_leakage()
+    else:
+        return eta_InsScr()*(u_th_scr *fVentRoof2()+(1-u_th_scr)*f_vent_roof_side(u_roof,u_side,a_roof,a_side)*eta_Side)+0.5*f_leakage()
+    
+#Giai thuat Euler
+#Theo ly thuyet
+# y'(t) = f(t,y(t)) <=> CO2_Air'(t) = f(t,CO2_Air(t)) <=> CO2_Air' = dx
+# => CO2_Air(t0+h) = CO2_Air(t0) + h*f(t0,CO2_Air(t0)) = CO2_Air(t0) + h*dx
+def Euler(CO2_Air_t0,CO2_Top_t0,h,t=dx):
+    CO2_Air = CO2_Air_t0 + h*t(CO2_Air_t0,CO2_Top_t0)[0]
+    CO2_Top = CO2_Top_t0 + h*t(CO2_Air_t0,CO2_Top_t0)[1]
+    return [CO2_Air,CO2_Top] 
 
-#cong thuc 27
-def L(L0,K,e,LAI,m):
-    L= L0*(1-(K*pow(e,-K*LAI))/(1-m))
-    return L
 
 #Quan
 #equation 13
@@ -159,13 +155,10 @@ def f_VentSide():
         f2VentSide1 = f_vent_roof_side(u_roof, u_side, a_roof, a_side)
         f2VentSide2 = f_vent_roof_side(u_roof, u_side, 0, a_side)
 
-        return eta_InsScr()*(U_ThScr*f2VentSide2 + (1 - U_ThScr)*f2VentSide1*eta_Side) + 0.5*f_leakage()
-#equation 9
-def MC_AirOut(co2_air, co2_out):
-    return (f_VentSide() + f_VentForced()) * (co2_air - co2_out)
+        return eta_InsScr()*(u_th_scr*f2VentSide2 + (1 - u_th_scr)*f2VentSide1*eta_Side) + 0.5*f_leakage()
 #Runge-Kutta bac 4
 #gia su dx()[0] la co2_air', dx()[1] la co2_top'
-def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
+def rk4(co2_air_t0, co2_top_t0, h, t, g = dx):
     #buoc nhay: (t + h - t) / h
     n = 1
     #gia tri tai (t + h) cua co2_air
@@ -191,31 +184,20 @@ def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
 #cong thuc 19
 def hCBuf():
     if CBuf > CMaxBuf:
-    hCBuf = 0
+        hCBuf=0
     else:
-    hCBuf=1
+        hCBuf=1
     return hCBuf
 
 #Tri (P va J)
-def P(CO2_Stom,J,r):
-    return (J*(CO2_Stom-Gamma))/(4*(CO2_Stom+2*Gamma))
+def P(CO2_Air):
+    return (J()*(CO2_Stom(CO2_Air)-Gamma()))/(4*(CO2_Stom+2*Gamma()))
 
-def R():
-    return P() * Gamma() / CO2_Stom()
+def R_func(CO2_Air):
+    return P(CO2_Air) * Gamma() / CO2_Stom(CO2_Air)
 #Global variable
-O=0.7
-alpha=0.385
-def J(J_POT,PAR_Can):
-    return (J_POT+alpha*PAR_Can-math.sqrt(pow(J_POT+alpha*PAR_Can,2)-4*0.7*J_POT*alpha*PAR_Can))/(2*O)
-
-LAI = 2
-J_MAX_Leaf = 210
-E_j = 37 * 10**3
-T_CanK = 293.2
-T_K = 298.15
-R = 8.314
-S = 710
-H = 22 * 10**4
+def J():
+    return (J_POT() + alpha * PAR_Can - math.sqrt(pow(J_POT() + alpha * PAR_Can, 2)- 4 * 0.7 * J_POT() * alpha * PAR_Can))/(2*theta)
 
 #J_MAX_25_CAN
 def J_MAX_25_CAN():
@@ -227,10 +209,13 @@ def J_POT():
 c_gamma = 1.7
 nCo2Air_Stom = 0.67
 #CO2_Stom
-def CO2_Stom():
+def CO2_Stom(CO2_Air):
     return nCo2Air_Stom * CO2_Air
 #Gamma
 def Gamma(T_Can = t_air):
     return (J_MAX_Leaf * c_gamma * T_Can) / J_MAX_25_CAN() + 20 * c_gamma * (1 - J_MAX_Leaf / J_MAX_25_CAN())
 
+# Press the green button in the gutter to run the script.
+if __name__ == '__main__':
+    pass
 

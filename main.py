@@ -165,9 +165,10 @@ def f_VentSide():
 
         return eta_InsScr()*(u_th_scr*f2VentSide2 + (1 - u_th_scr)*f2VentSide1*eta_Side) + 0.5*f_leakage()
 #Runge-Kutta bac 4
-def rk4(co2_air_t0, co2_top_t0, h, t, g = dx()):
+def rk4(co2_air_t0, co2_top_t0, h, g = dx):
     #buoc nhay
-    n = (int)(t*60/h)
+    n = 1
+
     #gia tri tai (t + h) cua co2_air
     co2_air = co2_air_t0
     #gia tri tai (t + h) cua co2_top

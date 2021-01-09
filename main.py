@@ -73,7 +73,7 @@ H = 22 * 10**4
 c_gamma = 1.7
 nCo2Air_Stom = 0.67
 
-def dx(CO2_Air,CO2_Top):
+def dx(t,CO2_Air,CO2_Top):
     dot_CO2_Air = (MC_BlowAir() + MC_ExtAir() + MC_PadAir(CO2_out,CO2_Air) - MC_AirTop(CO2_Air,CO2_Top) - MC_AirOut(CO2_Air,CO2_out) - MC_AirCan(CO2_Air))/cap_CO2_Air
     dot_CO2_Top = (MC_AirTop(CO2_Air,CO2_Top) - MC_TopOut(CO2_out,CO2_Top)) / cap_CO2_Top
     return dot_CO2_Air,dot_CO2_Top
@@ -149,8 +149,8 @@ def fVentRoof():
 # y'(t) = f(t,y(t)) <=> CO2_Air'(t) = f(t,CO2_Air(t)) <=> CO2_Air' = dx
 # => CO2_Air(t0+h) = CO2_Air(t0) + h*f(t0,CO2_Air(t0)) = CO2_Air(t0) + h*dx
 def Euler(CO2_Air_t0,CO2_Top_t0,h,t=dx):
-    CO2_Air = CO2_Air_t0 + h*t(CO2_Air_t0,CO2_Top_t0)[0]
-    CO2_Top = CO2_Top_t0 + h*t(CO2_Air_t0,CO2_Top_t0)[1]
+    CO2_Air = CO2_Air_t0 + h*t(0,CO2_Air_t0,CO2_Top_t0)[0]
+    CO2_Top = CO2_Top_t0 + h*t(0,CO2_Air_t0,CO2_Top_t0)[1]
     return [CO2_Air,CO2_Top] 
 
 
@@ -222,6 +222,7 @@ def Gamma(T_Can = t_air):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(dx(484,484))
+    print(dx(0,484,484))
     print(Euler(484,484,5*60))
+    print(rk4(484,484,5*60,0))
 

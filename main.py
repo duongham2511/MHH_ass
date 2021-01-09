@@ -23,8 +23,8 @@ phi_Pad = 0
 O_ExtCO2=7.2*10**4
 U_ExtCO2=0
 
-t_air = 20
-t_top = 20
+t_air = 19.9
+t_top = 19.9
 t_out = 18
 p_air = 1
 p_top = 1
@@ -221,5 +221,5 @@ def Gamma(T_Can = t_air):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Euler(484,484,5))
+    print(Euler(484,484,5*60))
 

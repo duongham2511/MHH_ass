@@ -5,14 +5,14 @@
 
 import math
 
-vent_lee = 0
-vent_wind = 0
+vent_lee = 81.5
+vent_wind = 1.9
 
-CO2_out = 412.89
+CO2_out = 370
 cap_CO2_Air = 3.8
 cap_CO2_Top = 0.4
 
-CO2_dosage = 0
+heating_energy = 0/(24*3600)*3600000
 P_Blow = 0
 n_HeatCO2=0.057
 U_Blow= 0
@@ -21,18 +21,18 @@ A_Flr = 1.4 * 10**4
 U_Pad = 0
 phi_Pad = 0
 
-CO2_dosage = 0.14
+CO2_dosage = 0.14/(24*3600)*10**6
 O_ExtCO2=7.2*10**4
 U_ExtCO2= 0
 
-t_air = 19.9
+t_air = 21.2
 t_top = 19.9
 t_out = 18
-p_air = 1
-p_top = 1
+p_air = 1.20
+p_top = 1.20
 g = 9.81
 k_th_scr = 0.05*10**(-3)
-u_th_scr = 0
+u_th_scr = 4.99999949708591
 
 eta_Roof_Thr = 0.9
 eta_Side_Thr = eta_Roof_Thr
@@ -80,11 +80,11 @@ def dx(t,CO2_Air,CO2_Top):
 
 #equation 3
 def MC_BlowAir():
-    return (n_HeatCO2*U_Blow*P_Blow)/A_Flr
+    return (n_HeatCO2*U_Blow*P_Blow)/A_Flr if heating_energy ==0 else heating_energy
 
 #equation 4
 def MC_ExtAir():
-    return (O_ExtCO2*U_ExtCO2)/A_Flr
+    return (O_ExtCO2*U_ExtCO2)/A_Flr if CO2_dosage ==0 else CO2_dosage
 
 #equation 5
 def MC_PadAir(CO2_out,CO2_Air):
@@ -103,7 +103,7 @@ def MC_AirOut(co2_air, co2_out):
     return (f_VentSide() + f_VentForced()) * (co2_air - co2_out)
 
 def MC_AirCan(CO2_Air):
-    return M_CH20 * hCBuf() * (P(CO2_Air) - R_func(CO2_Air))
+    return M_CH20 * hCBuf() * (P(CO2_Air)*0.99)
 
 #equation 7
 def F_Th_Scr():
@@ -198,8 +198,6 @@ def hCBuf():
 def P(CO2_Air):
     return (J()*(CO2_Stom(CO2_Air)-Gamma()))/(4*(CO2_Stom(CO2_Air)+2*Gamma()))
 
-def R_func(CO2_Air):
-    return P(CO2_Air) * Gamma() / CO2_Stom(CO2_Air)
 #Global variable
 def J():
     return (J_POT() + alpha * PAR_Can - math.sqrt(pow(J_POT() + alpha * PAR_Can, 2)- 4 * 0.7 * J_POT() * alpha * PAR_Can))/(2*theta)
@@ -219,7 +217,7 @@ def Gamma(T_Can = t_air):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(dx(0,484,484))
-    print(Euler(484,484,5*60))
-    print(rk4(484,484,5*60))
+    print(dx(0,725,725))
+    print(Euler(725,725,5*60))
+    print(rk4(725,725,5*60))
 

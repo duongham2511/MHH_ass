@@ -28,7 +28,7 @@ class Environment:
     CO2_Air = 1296.01
     CO2_Top = 1296.01
     T_Air = 18.9 + 273.15
-    T_Top = T_Air + 1
+    T_Top = T_Air + delta_T
     T_Can = T_Top
     Rh = 81.6 /100
 
@@ -237,9 +237,11 @@ def update(env1: Environment, row):
     if not pandas.isnull(row["WindSpeed"]):
         env1.v_Wind = row["WindSpeed"]
     env1.U_Roof = (env1.Vent_Lee + env1.Vent_Wind)/2
+    env1.T_Top = env1.T_Air + env1.delta_T
+    env1.T_Can = env1.T_Top
 
 def run_Euler(env1: Environment, data_set,comparison_table,output_name):
-    for i in range(5):         #for each 5 minutes
+    for i in range(10):         #for each 5 minutes
         row = data_set.iloc[i]
         #print("New environment:",row)
         update(env1,row)
@@ -261,7 +263,7 @@ def run_Euler(env1: Environment, data_set,comparison_table,output_name):
     comparison_table.to_excel(output_name)
 
 def run_rk4(env1: Environment, data_set,comparison_table,output_name):
-    for i in range(5):         #for each 5 minutes
+    for i in range(10):         #for each 5 minutes
         row = data_set.iloc[i]
         #print("New environment:",row)
         update(env1,row)
@@ -290,12 +292,18 @@ if __name__ == '__main__':
     env2.CO2_Air = 770
     env2.CO2_Top = 770
     env2.T_Air = 292.05
+    env2.T_Top = 293.05
+    env2.T_Out = 283.15
+    env2.T_Can = 293.05
     env2.Rh = 0.816
-    env2.Vent_Lee = 0
-    env2.Vent_Wind = 0'''
+    env2.U_Roof = 0
+    env2.U_Th_Scr = 0.95
+    env2.U_Ext_CO2 = 0
+    env2.v_Wind = 2
+    print(dx(env2))'''
 
     data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","Co2ActuationRegulation","OutsideTemp","WindSpeed"])
-    data_set = data_set.iloc[216:221,]
+    data_set = data_set.iloc[216:226,]
     data_set = data_set.reset_index(drop = True)
     print(data_set)
     comparison_table = pandas.DataFrame(columns = ["Timestamp","CO2_Air_real","CO2_Air_calc"])

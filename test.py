@@ -236,6 +236,7 @@ def update(env1: Environment, row):
         env1.T_Out = row["OutsideTemp"] + 273.15
     if not pandas.isnull(row["WindSpeed"]):
         env1.v_Wind = row["WindSpeed"]
+    env1.U_Roof = (env1.Vent_Lee + env1.Vent_Wind)/2
 
 def run_Euler(env1: Environment, data_set,comparison_table,output_name):
     for i in range(5):         #for each 5 minutes
@@ -282,7 +283,17 @@ def run_rk4(env1: Environment, data_set,comparison_table,output_name):
     comparison_table.to_excel(output_name)
 
 
+
+
 if __name__ == '__main__':
+    '''env2 = Environment()
+    env2.CO2_Air = 770
+    env2.CO2_Top = 770
+    env2.T_Air = 292.05
+    env2.Rh = 0.816
+    env2.Vent_Lee = 0
+    env2.Vent_Wind = 0'''
+
     data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","Co2ActuationRegulation","OutsideTemp","WindSpeed"])
     data_set = data_set.iloc[216:221,]
     data_set = data_set.reset_index(drop = True)

@@ -217,6 +217,67 @@ def CO2_Stom(CO2_Air):
 def Gamma(T_Can = t_air):
     return (J_MAX_Leaf * c_gamma * T_Can) / J_MAX_25_CAN() + 20 * c_gamma * (1 - J_MAX_Leaf / J_MAX_25_CAN())
 
+
+# Câu 5 -------------------------------------------------------------------------------------------------------------------------------------
+#Global variable
+denta_H = 2.45*10**6
+gamma = 65.8
+eta_HeatVap = 4.43*10**-8
+M_Water = 18
+U_Fog = 0
+phi_Fog = 0
+VP_Out = 1.5
+h_Air = 3.8
+VP_Can = VP_ThScr = 1 #
+HEC_AirThSrc = 0 # Do u_th_scr = 0
+c_p_air = 10**3
+rb = 275
+rs = 82
+A_Cov = 1.8*10**4
+t_cov_in = 17 #
+VP_TopCov = 1.2 #
+VP_in = 1 #
+c_HEC_in = 1.86
+h_Top = 3 #
+def MV_BlowAir():
+    return eta_HeatVap*U_Blow*P_Blow/A_Flr
+def MV_PadAir():
+    return p_air*U_Pad*phi_Pad/A_Flr
+def MV_Airout_Pad(VP_Air):
+    return (U_Pad*phi_Pad/A_Flr)*(M_Water/R)*(VP_Air/(t_air+273.15))
+def MV_FogAir():
+    return U_Fog*phi_Fog/A_Flr
+def MV_AirTop(VP_Air,VP_Top):
+    return ((M_Water*F_Th_Scr())/R)*((VP_Air/(t_air+273.15))-VP_Top/(t_top+273.15))
+def MV_AirOut(VP_Air):
+    return ((M_Water*(f_VentSide()+f_VentForced()))/R)*((VP_Air/(t_air+273.15))-VP_Out/(t_out+273.15))
+def cap_VP_Air():
+    return (M_Water*h_Air)/(R*(t_air+273.15))
+def MV_AirThSrc(VP_Air):
+    if VP_Air < VP_ThScr:
+        return 0
+    else:
+        return 6.4*10**-9*HEC_AirThSrc*(VP_Air-VP_ThScr)
+def VEC_CanAir():
+    return (2*p_air*c_p_air*LAI)/(denta_H*gamma*(rb+rs))
+def MV_CanAir(VP_Air):
+    return VEC_CanAir()*(VP_Can-VP_Air)
+def MV_TopOut(VP_Top):
+    return (M_Water*fVentRoof()/R)*((VP_Top/(t_top+273.15))-(VP_Out/(t_out+273.15)))
+def HEC_TopCov_in():
+    return c_HEC_in*(t_top-t_cov_in)**0.33*A_Cov/A_Flr
+def MV_TopCov_in():
+    if(VP_TopCov<VP_in):
+        return 0
+    else:
+        return 6.4*10**-9*HEC_TopCov_in()*(VP_TopCov-VP_in)
+def cap_VP_Top():
+    return (M_Water*h_Top)/(R*(t_top+273.15))
+def dx2(VP_Air,VP_Top):
+    a = (MV_CanAir(VP_Air) + MV_PadAir() + MV_FogAir() + MV_BlowAir() - MV_AirThSrc(VP_Air) - MV_AirTop(VP_Air,VP_Top) - MV_AirOut(VP_Air) - MV_Airout_Pad(VP_Air))/cap_VP_Air()
+    b = (MV_AirTop(VP_Air,VP_Top) - MV_TopCov_in() - MV_TopOut(VP_Top))/cap_VP_Top()
+    return [a,b]
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print(dx(0,484,484))

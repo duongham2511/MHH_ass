@@ -255,7 +255,7 @@ def run_Euler(env1: Environment, data_set,comparison_table,output_name):
             env1.CO2_Air = prediction[0]
             env1.CO2_Top = prediction[1]
     print(comparison_table)
-    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True)
+    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True, title= "Euler_plot (ppm)")
     plt.show()
     comparison_table.to_excel(output_name)
 
@@ -277,7 +277,7 @@ def run_rk4(env1: Environment, data_set,comparison_table,output_name):
             env1.CO2_Air = prediction[0]
             env1.CO2_Top = prediction[1]
     print(comparison_table)
-    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True)
+    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True, title= "rk4_plot (ppm)")
     plt.show()
     comparison_table.to_excel(output_name)
 

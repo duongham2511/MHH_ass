@@ -237,15 +237,7 @@ def update(env1: Environment, row):
     if not pandas.isnull(row["WindSpeed"]):
         env1.v_Wind = row["WindSpeed"]
 
-
-if __name__ == '__main__':
-    data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","Co2ActuationRegulation","OutsideTemp","WindSpeed"])
-    data_set = data_set.iloc[216:221,]
-    data_set = data_set.reset_index(drop = True)
-    print(data_set)
-    comparison_table = pandas.DataFrame(columns = ["Timestamp","CO2_Air_real","CO2_Air_calc"])
-    env1 = Environment()
-
+def run_Euler(env1: Environment, data_set,comparison_table,output_name):
     for i in range(5):         #for each 5 minutes
         row = data_set.iloc[i]
         #print("New environment:",row)
@@ -265,4 +257,38 @@ if __name__ == '__main__':
     print(comparison_table)
     comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True)
     plt.show()
-    comparison_table.to_excel('''output.xlsx''')
+    comparison_table.to_excel(output_name)
+
+def run_rk4(env1: Environment, data_set,comparison_table,output_name):
+    for i in range(5):         #for each 5 minutes
+        row = data_set.iloc[i]
+        #print("New environment:",row)
+        update(env1,row)
+        if i ==0:
+            env1.CO2_Air = round(row["Co2"] / env1.eta_mg_ppm,2)
+            env1.CO2_Top = round(row["Co2"] / env1.eta_mg_ppm,2)
+        new_row = {"Timestamp":row["Timestamp"],"CO2_Air_real":row["Co2"],"CO2_Air_calc":env1.CO2_Air*env1.eta_mg_ppm}
+        comparison_table = comparison_table.append(new_row, ignore_index = True)
+        for j in range(5*60):    #for each seconds
+            #print("Step:",i*5*60+j)
+            #print("dx:",dx(env1))
+            prediction = rk4(env1,1)
+            #print("result =",prediction)
+            env1.CO2_Air = prediction[0]
+            env1.CO2_Top = prediction[1]
+    print(comparison_table)
+    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True)
+    plt.show()
+    comparison_table.to_excel(output_name)
+
+
+if __name__ == '__main__':
+    data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","Co2ActuationRegulation","OutsideTemp","WindSpeed"])
+    data_set = data_set.iloc[216:221,]
+    data_set = data_set.reset_index(drop = True)
+    print(data_set)
+    comparison_table = pandas.DataFrame(columns = ["Timestamp","CO2_Air_real","CO2_Air_calc"])
+    env1 = Environment()
+
+    run_Euler(env1,data_set,comparison_table,"output_Euler.xlsx")
+    run_rk4(env1,data_set,comparison_table,"output_rk4.xlsx")

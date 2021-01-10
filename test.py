@@ -1,5 +1,9 @@
 import math
 import copy
+import pandas
+import numpy
+import matplotlib
+import matplotlib.pyplot as plt
 
 class Environment:
 
@@ -16,29 +20,29 @@ class Environment:
 
     #outside parameters
     CO2_Out = 668 #mg/m^3
-    T_Out = 17.5 + 273.15
-    v_Wind = 4.7
+    T_Out = 11.6 + 273.15
+    v_Wind = 1
 
     #inside parameters
     delta_T = 1
-    CO2_Air = round(509 / eta_mg_ppm,2)
-    CO2_Top = round(509 / eta_mg_ppm,2)
-    T_Air = 19.6 + 273.15
+    CO2_Air = 1296.01
+    CO2_Top = 1296.01
+    T_Air = 18.9 + 273.15
     T_Top = T_Air + 1
     T_Can = T_Top
-    Rh = 91.3 /100
+    Rh = 81.6 /100
 
     #greenhouse control parameters
-    Vent_Lee = float(22.8)/100
-    Vent_Wind = float(1.8)/100
+    Vent_Lee = float(0)/100
+    Vent_Wind = float(0)/100
     U_Side = 0
     U_Roof = (Vent_Lee + Vent_Wind)/2
     eta_Side = 0
     eta_Roof = 1
     U_Blow = 0 
-    U_Ext_CO2 = 1
+    U_Ext_CO2 = 0
     U_Pad = 0
-    U_Th_Scr = 0/100
+    U_Th_Scr = 95/100
     U_Vent_Forced = 0
 
     #greenhouse design parameters
@@ -189,7 +193,7 @@ def rho_Top(env1: Environment):
 def Euler(env1: Environment,h,t=dx):
     CO2_Air = env1.CO2_Air + h*t(env1)[0]
     CO2_Top = env1.CO2_Top + h*t(env1)[1]
-    return CO2_Air *env1.eta_mg_ppm,CO2_Top*env1.eta_mg_ppm
+    return round(CO2_Air,2),round(CO2_Top,2)
 
 #rk4
 def rk4(env1: Environment,h,g = dx):
@@ -213,10 +217,52 @@ def rk4(env1: Environment,h,g = dx):
     l4 = round(g(env2)[1],2)
     co2_air = env1.CO2_Air + (h / 6.0)*(k1 + 2 * k2 + 2 * k3 + k4)
     co2_top = env1.CO2_Top + (h / 6.0)*(l1 + 2 * l2 + 2 * l3 + l4)
-    return co2_air*env1.eta_mg_ppm, co2_top*env1.eta_mg_ppm
+    return round(co2_air), round(co2_top,2)
+
+def update(env1: Environment, row):
+    if not pandas.isnull(row["Temp"]):
+        env1.T_Air = row["Temp"] + 273.15
+    if not pandas.isnull(row["Rh"]):
+        env1.Rh = row["Rh"] /100
+    if not pandas.isnull(row["VentLee"]):    
+        env1.Vent_Lee = row["VentLee"] /100
+    if not pandas.isnull(row["VentWind"]):
+        env1.Vent_Wind = row["VentWind"] /100
+    if not pandas.isnull(row["EnergyCurtain"]):
+        env1.U_Th_Scr = row["EnergyCurtain"] /100
+    if not pandas.isnull(row["Co2ActuationRegulation"]):
+        env1.U_Ext_CO2 = row["Co2ActuationRegulation"]
+    if not pandas.isnull(row["OutsideTemp"]):
+        env1.T_Out = row["OutsideTemp"] + 273.15
+    if not pandas.isnull(row["WindSpeed"]):
+        env1.v_Wind = row["WindSpeed"]
+
 
 if __name__ == '__main__':
+    data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","Co2ActuationRegulation","OutsideTemp","WindSpeed"])
+    data_set = data_set.iloc[216:221,]
+    data_set = data_set.reset_index(drop = True)
+    print(data_set)
+    comparison_table = pandas.DataFrame(columns = ["Timestamp","CO2_Air_real","CO2_Air_calc"])
     env1 = Environment()
-    print(dx(env1))
-    print(Euler(env1,5*60))
-    print(rk4(env1,5*60))
+
+    for i in range(5):         #for each 5 minutes
+        row = data_set.iloc[i]
+        #print("New environment:",row)
+        update(env1,row)
+        if i ==0:
+            env1.CO2_Air = round(row["Co2"] / env1.eta_mg_ppm,2)
+            env1.CO2_Top = round(row["Co2"] / env1.eta_mg_ppm,2)
+        new_row = {"Timestamp":row["Timestamp"],"CO2_Air_real":row["Co2"],"CO2_Air_calc":env1.CO2_Air*env1.eta_mg_ppm}
+        comparison_table = comparison_table.append(new_row, ignore_index = True)
+        for j in range(5*60):    #for each seconds
+            #print("Step:",i*5*60+j)
+            #print("dx:",dx(env1))
+            prediction = Euler(env1,1)
+            #print("result =",prediction)
+            env1.CO2_Air = prediction[0]
+            env1.CO2_Top = prediction[1]
+    print(comparison_table)
+    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True)
+    plt.show()
+    comparison_table.to_excel('''output.xlsx''')

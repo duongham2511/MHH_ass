@@ -15,19 +15,20 @@ class Environment():
 
     #outside parameters
     #VP_Out = 700 #(Pa) #1500
-    VP_Out = 1500
-    T_Out = 11.6 + 273.15
+    Rh_Out = 0.88
+    T_Out = 11.4 + 273.15
     v_Wind = 1
 
     #inside parameters
     delta_T = 1
-    T_Air = 18.9 + 273.15
+    T_Air = 18.8 + 273.15
     T_Top = T_Air + 1
-    T_Can = T_Top
-    Rh = 81.6 /100
-    VP_Air = (610.78) * math.exp((T_Air - 273.15) / (T_Air - 273.15 + 238.3) * 17.2694) * Rh #1773
-    VP_Top = (610.78) * math.exp((T_Top - 273.15) / (T_Top - 273.15 + 238.3) * 17.2694) * Rh
-    VP_Can = VP_Top #1000
+    Rh = 0.817
+    VP_Out = math.exp(77.3450 + 0.0057 * T_Out - 7235 / T_Out) / T_Out**8.2 * Rh
+    VP_Air = math.exp(77.3450 + 0.0057 * T_Air - 7235 / T_Air) / T_Air**8.2 * Rh
+    VP_Top = math.exp(77.3450 + 0.0057 * T_Top - 7235 / T_Top) / T_Air**8.2 * Rh
+    T_Can = T_Air + 1
+    VP_Can = (610.78) * math.exp((T_Can - 273.15) / (T_Can - 273.15 + 238.3) * 17.2694) * Rh_Out
 
     #greenhouse control parameters
     Vent_Lee = float(0)/100
@@ -83,19 +84,27 @@ class Environment():
     rb = 275
     rs = 82
 
+    #pad and fan
+    eta_Pad = 0
+    x_Pad = 0
+    x_Out = 0
+
     #Cov,in
     A_Cov = 1.8*10**4
-    T_Cov_in = 17 #
-    VP_Cov_in = 1 #
+    T_Cov_in = T_Air + 1
+    VP_Cov_in = (610.78) * math.exp((T_Cov_in - 273.15) / (T_Cov_in - 273.15 + 238.3) * 17.2694) * Rh_Out
     c_HEC_in = 1.86
 
     #ThScr
-    VP_ThScr = 1 #
-    T_ThScr = 1 #
+    T_ThScr = T_Air + 1 
+    VP_ThScr = (610.78) * math.exp((T_ThScr - 273.15) / (T_ThScr - 273.15 + 238.3) * 17.2694) * Rh_Out
 
+    #Mech
+    VP_Mech = 0
+    HEC_AirMech = 0
 
 def dx(env1: Environment):
-    a = (MV_CanAir(env1) + MV_PadAir(env1) + MV_FogAir(env1) + MV_BlowAir(env1) - MV_AirThSrc(env1) - MV_AirTop(env1) - MV_AirOut(env1) - MV_Airout_Pad(env1))/cap_VP_Air(env1)
+    a = (MV_CanAir(env1) + MV_PadAir(env1) + MV_FogAir(env1) + MV_BlowAir(env1) - MV_AirThSrc(env1) - MV_AirTop(env1) - MV_AirOut(env1) - MV_Airout_Pad(env1) - MV_AirMech(env1))/cap_VP_Air(env1)
     b = (MV_AirTop(env1) - MV_TopCov_in(env1) - MV_TopOut(env1))/cap_VP_Top(env1)
     return [a,b]
 
@@ -103,7 +112,7 @@ def MV_CanAir(env1: Environment):
     return VEC_CanAir(env1) * (env1.VP_Can - env1.VP_Air)
 
 def MV_PadAir(env1: Environment):
-    return rho_Air(env1) * env1.U_Pad * env1.phi_Pad / env1.A_Flr
+    return rho_Air(env1) * env1.U_Pad * env1.phi_Pad / env1.A_Flr * (env1.eta_Pad * (env1.x_Pad - env1.x_Out) + env1.x_Out)
 
 def MV_FogAir(env1: Environment):
     return env1.U_Fog * env1.phi_Fog / env1.A_Flr
@@ -125,6 +134,12 @@ def MV_AirOut(env1: Environment):
 
 def MV_Airout_Pad(env1: Environment):
     return (env1.U_Pad * env1.phi_Pad / env1.A_Flr) * (env1.M_Water / env1.R) * (env1.VP_Air / env1.T_Air)
+
+def MV_AirMech(env1: Environment):
+    if (env1.VP_Air < env1.VP_Mech):
+        return 0
+    else:
+        return 6.4*10**-9*env1.HEC_AirMech*(env1.VP_Air-env1.VP_Mech)
 
 def MV_TopCov_in(env1: Environment):
     if(env1.VP_Top < env1.VP_Cov_in):
@@ -245,9 +260,19 @@ def update(env1: Environment, row):
         env1.U_Th_Scr = row["EnergyCurtain"] /100
     if not pandas.isnull(row["OutsideTemp"]):
         env1.T_Out = row["OutsideTemp"] + 273.15
+    if not pandas.isnull(row["OutsideRh"]):
+        env1.Rh_Out = row["OutsideRh"] / 100
     if not pandas.isnull(row["WindSpeed"]):
         env1.v_Wind = row["WindSpeed"]
     env1.U_Roof = (env1.Vent_Lee + env1.Vent_Wind)/2
+    env1.VP_Out= math.exp(77.3450 + 0.0057 * env1.T_Out - 7235 / env1.T_Out) / env1.T_Out**8.2 * env1.Rh
+    env1.T_Can = env1.T_Air + 1
+    env1.VP_Can = (610.78) * math.exp((env1.T_Can - 273.15) / (env1.T_Can - 273.15 + 238.3) * 17.2694) * env1.Rh_Out
+    env1.T_Top = env1.T_Air + 1
+    env1.T_Cov_in = env1.T_Air + 1
+    env1.VP_Cov_in = (610.78) * math.exp((env1.T_Cov_in - 273.15) / (env1.T_Cov_in - 273.15 + 238.3) * 17.2694) * env1.Rh_Out
+    env1.T_ThScr = env1.T_Air + 1 
+    env1.VP_ThScr = (610.78) * math.exp((env1.T_ThScr - 273.15) / (env1.T_ThScr - 273.15 + 238.3) * 17.2694) * env1.Rh_Out
 
 def run_Euler(env1: Environment, data_set,comparison_table,output_name):
     for i in range(10):         #for each 5 minutes
@@ -255,9 +280,9 @@ def run_Euler(env1: Environment, data_set,comparison_table,output_name):
         #print("New environment:",row)
         update(env1,row)
         if i ==0:
-            env1.VP_Air = (610.78) * math.exp((env1.T_Air - 273.15) / (env1.T_Air - 273.15 + 238.3) * 17.2694) * env1.Rh
-            env1.VP_Top = (610.78) * math.exp((env1.T_Top - 273.15) / (env1.T_Top - 273.15 + 238.3) * 17.2694) * env1.Rh
-        vp_air_real = (610.78) * math.exp((env1.T_Air - 273.15) / (env1.T_Air - 273.15 + 238.3) * 17.2694) * env1.Rh
+            env1.VP_Air = math.exp(77.3450 + 0.0057 * env1.T_Air - 7235 / env1.T_Air) / env1.T_Air**8.2 * env1.Rh
+            env1.VP_Top = math.exp(77.3450 + 0.0057 * env1.T_Top - 7235 / env1.T_Top) / env1.T_Air**8.2 * env1.Rh
+        vp_air_real = math.exp(77.3450 + 0.0057 * env1.T_Air - 7235 / env1.T_Air) / env1.T_Air**8.2 * env1.Rh
         new_row = {"Timestamp":row["Timestamp"],"VP_Air_real":vp_air_real,"VP_Air_calc":env1.VP_Air}
         comparison_table = comparison_table.append(new_row, ignore_index = True)
         for j in range(5*60):    #for each seconds
@@ -268,7 +293,7 @@ def run_Euler(env1: Environment, data_set,comparison_table,output_name):
             env1.VP_Air = prediction[0]
             env1.VP_Top = prediction[1]
     print(comparison_table)
-    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True, title= "Euler_plot (Pa)")
+    comparison_table.set_index("Timestamp").plot(figsize=(10,5), grid=True, title= "euler_plot (Pa)")
     plt.show()
     #comparison_table.to_excel(output_name)
 
@@ -278,9 +303,9 @@ def run_rk4(env1: Environment, data_set,comparison_table,output_name):
         #print("New environment:",row)
         update(env1,row)
         if i ==0:
-            env1.VP_Air = (610.78) * math.exp((env1.T_Air - 273.15) / (env1.T_Air - 273.15 + 238.3) * 17.2694) * env1.Rh
-            env1.VP_Top = (610.78) * math.exp((env1.T_Top - 273.15) / (env1.T_Top - 273.15 + 238.3) * 17.2694) * env1.Rh
-        vp_air_real = (610.78) * math.exp((env1.T_Air - 273.15) / (env1.T_Air - 273.15 + 238.3) * 17.2694) * env1.Rh
+            env1.VP_Air = math.exp(77.3450 + 0.0057 * env1.T_Air - 7235 / env1.T_Air) / env1.T_Air**8.2 * env1.Rh
+            env1.VP_Top = math.exp(77.3450 + 0.0057 * env1.T_Top - 7235 / env1.T_Top) / env1.T_Air**8.2 * env1.Rh
+        vp_air_real = math.exp(77.3450 + 0.0057 * env1.T_Air - 7235 / env1.T_Air) / env1.T_Air**8.2 * env1.Rh
         new_row = {"Timestamp":row["Timestamp"],"VP_Air_real":vp_air_real,"VP_Air_calc":env1.VP_Air}
         comparison_table = comparison_table.append(new_row, ignore_index = True)
         for j in range(5*60):    #for each seconds
@@ -298,12 +323,12 @@ def run_rk4(env1: Environment, data_set,comparison_table,output_name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","Co2","VentLee","VentWind","EnergyCurtain","OutsideTemp","WindSpeed"])
-    data_set = data_set.iloc[216:226,]
+    data_set = pandas.read_csv("environment.csv",usecols=["Timestamp","Temp","Rh","VentLee","VentWind","EnergyCurtain","OutsideTemp", "OutsideRh","WindSpeed"])
+    data_set = data_set.iloc[0:10,]
     data_set = data_set.reset_index(drop = True)
     print(data_set)
     comparison_table = pandas.DataFrame(columns = ["Timestamp","VP_Air_real","VP_Air_calc"])
     env1 = Environment()
-
-    run_Euler(env1,data_set,comparison_table,"output_Euler.xlsx")
+    print(dx(env1))
+    #run_Euler(env1,data_set,comparison_table,"output_Euler.xlsx")
     run_rk4(env1,data_set,comparison_table,"output_rk4.xlsx")
